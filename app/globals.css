@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Force remove white background from body */
+body {
+  background-color: transparent !important;
+  background: none !important;
+}
+
+html {
+  background-color: transparent !important;
+  background: none !important;
+}
+
+/* Remove white background from Next.js root div */
+#__next {
+  background-color: transparent !important;
+  background: none !important;
+}
+
+/* Remove any Tailwind default backgrounds */
+@layer base {
+  body {
+    background: none !important;
+    background-color: transparent !important;
+  }
+  
+  #__next {
+    background: none !important;
+    background-color: transparent !important;
+  }
+}
+
+/* Hide scrollbar but keep functionality */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+}
