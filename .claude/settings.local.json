@@ -95,7 +95,9 @@
       "mcp__supabase__list_projects",
       "Bash(npm run upload-remaining:*)",
       "Bash(git remote add:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(npx vercel:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

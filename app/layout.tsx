@@ -15,6 +15,22 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "NCBS - NoCode Business Systems",
   description: "We build custom business systems for companies ready to scale",
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-16x16.svg', sizes: '16x16', type: 'image/svg+xml' },
+      { url: '/favicon-32x32.svg', sizes: '32x32', type: 'image/svg+xml' }
+    ],
+    apple: [
+      { url: '/apple-touch-icon.svg', sizes: '180x180', type: 'image/svg+xml' }
+    ],
+    other: [
+      { rel: 'mask-icon', url: '/favicon.svg', color: '#0d3366' }
+    ]
+  },
+  manifest: '/site.webmanifest',
+  themeColor: '#0d3366',
+  viewport: 'width=device-width, initial-scale=1'
 };
 
 export default function RootLayout({
