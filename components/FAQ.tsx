@@ -341,7 +341,7 @@ Many of our best clients tried off-the-shelf first and came to us when they outg
                       <div className="px-4 pb-4 md:px-6 md:pb-6">
                         <div className="md:pl-16">
                           <div className="bg-gradient-to-br from-gray-50 to-gray-50/50 rounded-lg p-4 md:p-6 border border-gray-100">
-                            {faq.answer.split('\n').map((paragraph, i) => {
+                            {faq.answer.split('\n').map((paragraph: string, i: number) => {
                               if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
                                 return (
                                   <h4 key={i} className="font-semibold text-gray-900 mt-3 md:mt-4 mb-2 first:mt-0 text-sm md:text-base">
