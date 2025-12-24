@@ -1,0 +1,170 @@
+# Supabase Configuration File
+# https://supabase.com/docs/guides/cli/config
+
+[project]
+name = "horizon-systems"
+project_id = "sjbvvrjxsbqrgtpgdxwr"
+
+# API Configuration
+[api]
+enabled = true
+port = 54321
+max_rows = 1000
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+
+# Database Configuration
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+# Authentication Configuration
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+max_frequency = "1s"
+
+[auth.sms]
+enable_signup = false
+enable_confirmations = false
+max_frequency = "1s"
+
+# External OAuth Providers (configure as needed)
+[auth.external.apple]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.azure]
+enabled = false
+client_id = ""
+secret = ""
+url = ""
+
+[auth.external.bitbucket]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.discord]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.facebook]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.github]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.gitlab]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.google]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.keycloak]
+enabled = false
+client_id = ""
+secret = ""
+url = ""
+
+[auth.external.linkedin]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.notion]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.twitch]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.twitter]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.slack]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.spotify]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.workos]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.zoom]
+enabled = false
+client_id = ""
+secret = ""
+
+# Storage Configuration
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+buckets = [
+  { name = "models", public = true, file_size_limit = "50MiB", allowed_mime_types = ["model/gltf-binary", "model/gltf+json", "application/octet-stream"] },
+  { name = "images", public = true, file_size_limit = "10MiB", allowed_mime_types = ["image/*"] },
+  { name = "documents", public = false, file_size_limit = "20MiB" }
+]
+
+# Edge Functions Configuration
+[functions]
+enabled = true
+
+# Realtime Configuration
+[realtime]
+enabled = true
+
+# Studio Configuration
+[studio]
+enabled = true
+port = 54323
+
+# Analytics Configuration
+[analytics]
+enabled = true
+
+# Logging Configuration
+[logs]
+level = "info"
+
+# Experimental Features
+[experimental]
+webhooks = false

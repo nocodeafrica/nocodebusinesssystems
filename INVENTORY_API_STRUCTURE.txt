@@ -1,0 +1,273 @@
+# Inventory Management API - File Structure
+# ==========================================
+
+horizon-systems/
+│
+├── app/
+│   └── api/
+│       └── v1/
+│           └── inventory/
+│               ├── README.md                          # API Documentation
+│               │
+│               ├── products/
+│               │   ├── route.ts                       # GET /products, POST /products
+│               │   └── [id]/
+│               │       └── route.ts                   # GET /products/:id, PATCH /products/:id, DELETE /products/:id
+│               │
+│               ├── warehouses/
+│               │   ├── route.ts                       # GET /warehouses, POST /warehouses
+│               │   └── [id]/
+│               │       └── route.ts                   # GET /warehouses/:id, PATCH /warehouses/:id, DELETE /warehouses/:id
+│               │
+│               └── stock/
+│                   ├── route.ts                       # GET /stock (list stock levels)
+│                   ├── adjust/
+│                   │   └── route.ts                   # POST /stock/adjust
+│                   └── transfer/
+│                       └── route.ts                   # POST /stock/transfer
+│
+├── lib/
+│   ├── api/
+│   │   ├── index.ts                                   # Central export (import from here)
+│   │   ├── errors.ts                                  # Error classes & formatters
+│   │   ├── middleware.ts                              # Auth, authorization, RLS
+│   │   ├── validators.ts                              # Zod schemas & validation
+│   │   ├── example-usage.ts                           # Example code & React hooks
+│   │   └── database-migration.sql                     # Complete DB schema
+│   │
+│   └── supabase.ts                                    # Existing Supabase client
+│
+├── INVENTORY_API_SUMMARY.md                           # Complete implementation summary
+├── INVENTORY_API_QUICKSTART.md                        # 5-minute setup guide
+└── INVENTORY_API_STRUCTURE.txt                        # This file
+
+
+# Key Files Explained
+# ===================
+
+## API Routes (app/api/v1/inventory/)
+┌─────────────────────────────────────────────────────────────────────┐
+│ Products API                                                        │
+├─────────────────────────────────────────────────────────────────────┤
+│ • route.ts           → List products (GET), Create product (POST)   │
+│ • [id]/route.ts      → Get, Update, Delete individual product       │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ Warehouses API                                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│ • route.ts           → List warehouses (GET), Create warehouse      │
+│ • [id]/route.ts      → Get, Update, Delete individual warehouse     │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ Stock API                                                           │
+├─────────────────────────────────────────────────────────────────────┤
+│ • route.ts           → List all stock levels across warehouses      │
+│ • adjust/route.ts    → Adjust stock (purchase, sale, damage, etc.)  │
+│ • transfer/route.ts  → Transfer stock between warehouses            │
+└─────────────────────────────────────────────────────────────────────┘
+
+
+## Shared Utilities (lib/api/)
+┌─────────────────────────────────────────────────────────────────────┐
+│ errors.ts - Error Handling                                          │
+├─────────────────────────────────────────────────────────────────────┤
+│ • ApiError classes (400, 401, 403, 404, 409, 422, 500, 503)        │
+│ • formatErrorResponse() - Standardized error format                 │
+│ • formatSuccessResponse() - Standardized success format             │
+│ • asyncHandler() - Automatic error handling wrapper                 │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ middleware.ts - Authentication & Authorization                      │
+├─────────────────────────────────────────────────────────────────────┤
+│ • authenticate() - JWT token validation via Supabase                │
+│ • requireModuleAccess() - Check organization subscription           │
+│ • requireRole() - Role-based access control                         │
+│ • withModuleAuth() - Combined auth + module check                   │
+│ • createAuthenticatedClient() - Supabase client with user token     │
+│ • checkRateLimit() - Basic rate limiting                            │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ validators.ts - Input Validation                                    │
+├─────────────────────────────────────────────────────────────────────┤
+│ • Zod schemas for all request bodies & query params                 │
+│ • Type-safe validation with TypeScript inference                    │
+│ • validateBody() - Validate request JSON body                       │
+│ • validateSearchParams() - Validate URL query parameters            │
+│ • validateParams() - Validate route parameters (e.g., :id)          │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ index.ts - Central Export                                           │
+├─────────────────────────────────────────────────────────────────────┤
+│ Import everything from one place:                                   │
+│ import { asyncHandler, withModuleAuth } from '@/lib/api'            │
+└─────────────────────────────────────────────────────────────────────┘
+
+
+## Database Schema (lib/api/database-migration.sql)
+┌─────────────────────────────────────────────────────────────────────┐
+│ Tables                                                               │
+├─────────────────────────────────────────────────────────────────────┤
+│ • products             → Product catalog                            │
+│ • warehouses           → Storage locations                          │
+│ • stock_levels         → Current inventory quantities               │
+│ • stock_adjustments    → Audit log of all stock changes             │
+│ • stock_transfers      → Inter-warehouse transfer records           │
+│ • organizations        → Multi-tenant organizations                 │
+│ • organization_members → User-organization-role mapping             │
+│ • organization_subscriptions → Module access control                │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ RLS Policies (Row-Level Security)                                   │
+├─────────────────────────────────────────────────────────────────────┤
+│ • Users can only access data from their organization                │
+│ • Role-based permissions (admin, manager, staff, viewer)            │
+│ • Automatic enforcement via Supabase                                │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ Helper Functions                                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│ • calculate_warehouse_stock_value() - Total inventory value         │
+│ • get_warehouse_stock_summary() - Warehouse metrics                 │
+│ • get_stock_summary() - Organization-wide metrics                   │
+│ • adjust_stock_level() - Atomic stock adjustment                    │
+│ • transfer_stock() - Atomic inter-warehouse transfer                │
+└─────────────────────────────────────────────────────────────────────┘
+
+
+# Usage Examples
+# ==============
+
+## Import Utilities
+import { 
+  asyncHandler,           // Error handling wrapper
+  formatSuccessResponse,  // Success response formatter
+  withModuleAuth,         // Auth + module check
+  validateBody,           // Request body validation
+  NotFoundError           // Typed error classes
+} from '@/lib/api'
+
+## Example API Route
+export const GET = asyncHandler(async (request: NextRequest) => {
+  // Authenticate user & check inventory module access
+  const { supabase, auth } = await withModuleAuth(request, 'inventory')
+  
+  // Query data (RLS automatically enforced)
+  const { data } = await supabase
+    .from('products')
+    .select('*')
+    .eq('organization_id', auth.organizationId)
+  
+  // Return standardized response
+  return formatSuccessResponse(data)
+})
+
+## Example Client Usage
+import { listProducts } from '@/lib/api/example-usage'
+
+const { data, meta } = await listProducts({
+  page: 1,
+  limit: 20,
+  search: 'laptop',
+  lowStock: true
+})
+
+
+# API Response Formats
+# ====================
+
+## Success Response
+{
+  "data": [...],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 150,
+    "total_pages": 8
+  }
+}
+
+## Error Response
+{
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Product not found",
+    "details": {},
+    "timestamp": "2025-01-20T10:00:00Z",
+    "path": "/api/v1/inventory/products/uuid"
+  }
+}
+
+
+# Authentication Flow
+# ===================
+
+1. User authenticates via Supabase Auth
+   ↓
+2. Receives JWT access token
+   ↓
+3. Includes token in API requests: Authorization: Bearer <token>
+   ↓
+4. API validates token and extracts user_id
+   ↓
+5. Queries organization_members to get organization_id
+   ↓
+6. Checks organization_subscriptions for module access
+   ↓
+7. Enforces RLS via organization_id filter
+   ↓
+8. Returns data only from user's organization
+
+
+# Security Layers
+# ===============
+
+Layer 1: Authentication
+└─ JWT token validation via Supabase Auth
+
+Layer 2: Organization Context
+└─ User must belong to an organization
+
+Layer 3: Module Subscription
+└─ Organization must have 'inventory' module enabled
+
+Layer 4: Role-Based Access
+└─ User role must have permission for the operation
+
+Layer 5: Row-Level Security (RLS)
+└─ Database enforces organization_id filtering
+
+Layer 6: Input Validation
+└─ Zod schemas validate all inputs
+
+Layer 7: Business Logic Validation
+└─ Prevent invalid operations (negative stock, duplicate SKUs)
+
+
+# Quick Command Reference
+# ========================
+
+# Start development server
+npm run dev
+
+# Test API endpoint
+curl -H "Authorization: Bearer TOKEN" \
+  http://localhost:3000/api/v1/inventory/products
+
+# Run database migration
+# Copy lib/api/database-migration.sql to Supabase SQL Editor
+
+# Install dependencies
+npm install zod
+
+# Build for production
+npm run build
+
+# Type check
+npx tsc --noEmit

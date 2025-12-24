@@ -1,0 +1,15 @@
+/* Custom MapBox Popup Styles */
+.mapboxgl-popup-content {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.mapboxgl-popup-tip {
+  display: none !important;
+}
+
+.custom-popup {
+  pointer-events: auto;
+}

@@ -1,0 +1,5 @@
+# Supabase Project Reference
+# This file is used by the Supabase CLI to link your local project to your Supabase project
+# https://supabase.com/docs/guides/cli
+
+project_id = "sjbvvrjxsbqrgtpgdxwr"

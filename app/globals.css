@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-space-grotesque: 'Space Grotesque', sans-serif;
+    --lime-primary: #bef264;
+    --lime-glow: rgba(190, 242, 100, 0.2);
+    --dark-bg: #020617;
+  }
+  
+  html, body {
+    font-family: var(--font-space-grotesque), sans-serif;
+  }
+}
+
+/* Force remove white background from body */
+body {
+  background-color: transparent !important;
+  background: none !important;
+}
+
+html {
+  background-color: transparent !important;
+  background: none !important;
+}
+
+/* Remove white background from Next.js root div */
+#__next {
+  background-color: transparent !important;
+  background: none !important;
+}
+
+/* Remove any Tailwind default backgrounds */
+@layer base {
+  body {
+    background: none !important;
+    background-color: transparent !important;
+  }
+  
+  #__next {
+    background: none !important;
+    background-color: transparent !important;
+  }
+}
+
+/* Hide scrollbar but keep functionality */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+}
