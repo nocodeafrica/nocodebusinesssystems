@@ -5,7 +5,7 @@
  * from both server-side and client-side code.
  */
 
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase';
 
 // =====================================================
 // CLIENT-SIDE USAGE (React Components, Client Actions)
@@ -15,99 +15,101 @@ import { supabase } from '@/lib/supabase'
  * Get authenticated API client
  */
 async function getAuthenticatedFetch() {
-  const { data: { session } } = await supabase.auth.getSession()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   if (!session) {
-    throw new Error('Not authenticated')
+    throw new Error('Not authenticated');
   }
 
-  const token = session.access_token
+  const token = session.access_token;
 
   return async (url: string, options: RequestInit = {}) => {
     return fetch(url, {
       ...options,
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
         ...options.headers,
       },
-    })
-  }
+    });
+  };
 }
 
 /**
  * Example: List products with pagination and filtering
  */
 export async function listProducts(params: {
-  page?: number
-  limit?: number
-  search?: string
-  category?: string
-  lowStock?: boolean
+  page?: number;
+  limit?: number;
+  search?: string;
+  category?: string;
+  lowStock?: boolean;
 }) {
-  const authenticatedFetch = await getAuthenticatedFetch()
+  const authenticatedFetch = await getAuthenticatedFetch();
 
   // Build query string
-  const queryParams = new URLSearchParams()
-  if (params.page) queryParams.append('page', params.page.toString())
-  if (params.limit) queryParams.append('limit', params.limit.toString())
-  if (params.search) queryParams.append('search', params.search)
-  if (params.category) queryParams.append('category', params.category)
-  if (params.lowStock) queryParams.append('low_stock', 'true')
+  const queryParams = new URLSearchParams();
+  if (params.page) queryParams.append('page', params.page.toString());
+  if (params.limit) queryParams.append('limit', params.limit.toString());
+  if (params.search) queryParams.append('search', params.search);
+  if (params.category) queryParams.append('category', params.category);
+  if (params.lowStock) queryParams.append('low_stock', 'true');
 
   const response = await authenticatedFetch(
     `/api/v1/inventory/products?${queryParams.toString()}`
-  )
+  );
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error.message)
+    const error = await response.json();
+    throw new Error(error.error.message);
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Example: Create a new product
  */
 export async function createProduct(productData: {
-  name: string
-  sku: string
-  unit_price: number
-  category?: string
-  reorder_point?: number
+  name: string;
+  sku: string;
+  unit_price: number;
+  category?: string;
+  reorder_point?: number;
 }) {
-  const authenticatedFetch = await getAuthenticatedFetch()
+  const authenticatedFetch = await getAuthenticatedFetch();
 
   const response = await authenticatedFetch('/api/v1/inventory/products', {
     method: 'POST',
     body: JSON.stringify(productData),
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error.message)
+    const error = await response.json();
+    throw new Error(error.error.message);
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Example: Get a single product
  */
 export async function getProduct(productId: string) {
-  const authenticatedFetch = await getAuthenticatedFetch()
+  const authenticatedFetch = await getAuthenticatedFetch();
 
   const response = await authenticatedFetch(
     `/api/v1/inventory/products/${productId}`
-  )
+  );
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error.message)
+    const error = await response.json();
+    throw new Error(error.error.message);
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -116,12 +118,12 @@ export async function getProduct(productId: string) {
 export async function updateProduct(
   productId: string,
   updates: Partial<{
-    name: string
-    unit_price: number
-    is_active: boolean
+    name: string;
+    unit_price: number;
+    is_active: boolean;
   }>
 ) {
-  const authenticatedFetch = await getAuthenticatedFetch()
+  const authenticatedFetch = await getAuthenticatedFetch();
 
   const response = await authenticatedFetch(
     `/api/v1/inventory/products/${productId}`,
@@ -129,117 +131,118 @@ export async function updateProduct(
       method: 'PATCH',
       body: JSON.stringify(updates),
     }
-  )
+  );
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error.message)
+    const error = await response.json();
+    throw new Error(error.error.message);
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Example: Delete a product
  */
 export async function deleteProduct(productId: string) {
-  const authenticatedFetch = await getAuthenticatedFetch()
+  const authenticatedFetch = await getAuthenticatedFetch();
 
   const response = await authenticatedFetch(
     `/api/v1/inventory/products/${productId}`,
     {
       method: 'DELETE',
     }
-  )
+  );
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error.message)
+    const error = await response.json();
+    throw new Error(error.error.message);
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Example: List warehouses
  */
 export async function listWarehouses(params: {
-  page?: number
-  city?: string
-  is_active?: boolean
+  page?: number;
+  city?: string;
+  is_active?: boolean;
 }) {
-  const authenticatedFetch = await getAuthenticatedFetch()
+  const authenticatedFetch = await getAuthenticatedFetch();
 
-  const queryParams = new URLSearchParams()
-  if (params.page) queryParams.append('page', params.page.toString())
-  if (params.city) queryParams.append('city', params.city)
+  const queryParams = new URLSearchParams();
+  if (params.page) queryParams.append('page', params.page.toString());
+  if (params.city) queryParams.append('city', params.city);
   if (params.is_active !== undefined) {
-    queryParams.append('is_active', params.is_active.toString())
+    queryParams.append('is_active', params.is_active.toString());
   }
 
   const response = await authenticatedFetch(
     `/api/v1/inventory/warehouses?${queryParams.toString()}`
-  )
+  );
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error.message)
+    const error = await response.json();
+    throw new Error(error.error.message);
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Example: Create a warehouse
  */
 export async function createWarehouse(warehouseData: {
-  name: string
-  code: string
-  city: string
-  address?: string
+  name: string;
+  code: string;
+  city: string;
+  address?: string;
 }) {
-  const authenticatedFetch = await getAuthenticatedFetch()
+  const authenticatedFetch = await getAuthenticatedFetch();
 
   const response = await authenticatedFetch('/api/v1/inventory/warehouses', {
     method: 'POST',
     body: JSON.stringify(warehouseData),
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error.message)
+    const error = await response.json();
+    throw new Error(error.error.message);
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Example: List stock levels
  */
 export async function listStock(params: {
-  page?: number
-  warehouse_id?: string
-  low_stock?: boolean
-  out_of_stock?: boolean
+  page?: number;
+  warehouse_id?: string;
+  low_stock?: boolean;
+  out_of_stock?: boolean;
 }) {
-  const authenticatedFetch = await getAuthenticatedFetch()
+  const authenticatedFetch = await getAuthenticatedFetch();
 
-  const queryParams = new URLSearchParams()
-  if (params.page) queryParams.append('page', params.page.toString())
-  if (params.warehouse_id) queryParams.append('warehouse_id', params.warehouse_id)
-  if (params.low_stock) queryParams.append('low_stock', 'true')
-  if (params.out_of_stock) queryParams.append('out_of_stock', 'true')
+  const queryParams = new URLSearchParams();
+  if (params.page) queryParams.append('page', params.page.toString());
+  if (params.warehouse_id)
+    queryParams.append('warehouse_id', params.warehouse_id);
+  if (params.low_stock) queryParams.append('low_stock', 'true');
+  if (params.out_of_stock) queryParams.append('out_of_stock', 'true');
 
   const response = await authenticatedFetch(
     `/api/v1/inventory/stock?${queryParams.toString()}`
-  )
+  );
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error.message)
+    const error = await response.json();
+    throw new Error(error.error.message);
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -251,7 +254,7 @@ export async function receiveInventory(
   quantity: number,
   referenceNumber?: string
 ) {
-  const authenticatedFetch = await getAuthenticatedFetch()
+  const authenticatedFetch = await getAuthenticatedFetch();
 
   const response = await authenticatedFetch('/api/v1/inventory/stock/adjust', {
     method: 'POST',
@@ -263,14 +266,14 @@ export async function receiveInventory(
       notes: 'Inventory received from supplier',
       reference_number: referenceNumber,
     }),
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error.message)
+    const error = await response.json();
+    throw new Error(error.error.message);
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -282,7 +285,7 @@ export async function recordSale(
   quantity: number,
   orderNumber: string
 ) {
-  const authenticatedFetch = await getAuthenticatedFetch()
+  const authenticatedFetch = await getAuthenticatedFetch();
 
   const response = await authenticatedFetch('/api/v1/inventory/stock/adjust', {
     method: 'POST',
@@ -294,14 +297,14 @@ export async function recordSale(
       notes: `Order ${orderNumber}`,
       reference_number: orderNumber,
     }),
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error.message)
+    const error = await response.json();
+    throw new Error(error.error.message);
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -314,7 +317,7 @@ export async function transferStock(
   quantity: number,
   notes?: string
 ) {
-  const authenticatedFetch = await getAuthenticatedFetch()
+  const authenticatedFetch = await getAuthenticatedFetch();
 
   const response = await authenticatedFetch(
     '/api/v1/inventory/stock/transfer',
@@ -328,14 +331,14 @@ export async function transferStock(
         notes,
       }),
     }
-  )
+  );
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error.message)
+    const error = await response.json();
+    throw new Error(error.error.message);
   }
 
-  return response.json()
+  return response.json();
 }
 
 // =====================================================
@@ -346,43 +349,43 @@ export async function transferStock(
  * Example: React hook for fetching products
  */
 export function useProducts(filters: {
-  search?: string
-  category?: string
-  page?: number
+  search?: string;
+  category?: string;
+  page?: number;
 }) {
-  const [products, setProducts] = React.useState<any[]>([])
-  const [loading, setLoading] = React.useState(true)
-  const [error, setError] = React.useState<string | null>(null)
+  const [products, setProducts] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const fetchProducts = async () => {
       try {
-        setLoading(true)
-        const response = await listProducts(filters)
-        setProducts(response.data)
-        setError(null)
+        setLoading(true);
+        const response = await listProducts(filters);
+        setProducts(response.data);
+        setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchProducts()
-  }, [filters.search, filters.category, filters.page])
+    fetchProducts();
+  }, [filters.search, filters.category, filters.page]);
 
-  return { products, loading, error }
+  return { products, loading, error };
 }
 
 /**
  * Example: React component for product list
  */
 export function ProductList() {
-  const [search, setSearch] = React.useState('')
-  const { products, loading, error } = useProducts({ search })
+  const [search, setSearch] = React.useState('');
+  const { products, loading, error } = useProducts({ search });
 
-  if (loading) return <div>Loading...</div>
-  if (error) return <div>Error: {error}</div>
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div>
@@ -414,7 +417,7 @@ export function ProductList() {
         </tbody>
       </table>
     </div>
-  )
+  );
 }
 
 /**
@@ -425,21 +428,21 @@ export function StockAdjustmentForm({
   warehouseId,
   onSuccess,
 }: {
-  productId: string
-  warehouseId: string
-  onSuccess?: () => void
+  productId: string;
+  warehouseId: string;
+  onSuccess?: () => void;
 }) {
-  const [quantity, setQuantity] = React.useState(0)
-  const [reason, setReason] = React.useState<string>('adjustment')
-  const [notes, setNotes] = React.useState('')
-  const [loading, setLoading] = React.useState(false)
+  const [quantity, setQuantity] = React.useState(0);
+  const [reason, setReason] = React.useState<string>('adjustment');
+  const [notes, setNotes] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     try {
-      const authenticatedFetch = await getAuthenticatedFetch()
+      const authenticatedFetch = await getAuthenticatedFetch();
       await authenticatedFetch('/api/v1/inventory/stock/adjust', {
         method: 'POST',
         body: JSON.stringify({
@@ -449,15 +452,15 @@ export function StockAdjustmentForm({
           reason,
           notes,
         }),
-      })
+      });
 
-      onSuccess?.()
+      onSuccess?.();
     } catch (err) {
-      alert('Error adjusting stock')
+      alert('Error adjusting stock');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -489,7 +492,7 @@ export function StockAdjustmentForm({
         {loading ? 'Adjusting...' : 'Adjust Stock'}
       </button>
     </form>
-  )
+  );
 }
 
 // =====================================================
@@ -500,43 +503,43 @@ export function StockAdjustmentForm({
  * Example: Server action for bulk product import
  */
 export async function bulkImportProducts(csvData: string) {
-  'use server'
+  'use server';
 
   // This would run on the server side
   // Parse CSV and create multiple products
-  const lines = csvData.split('\n')
-  const results = []
+  const lines = csvData.split('\n');
+  const results = [];
 
   for (const line of lines.slice(1)) {
     // Skip header
-    const [name, sku, price] = line.split(',')
+    const [name, sku, price] = line.split(',');
 
     try {
       const product = await createProduct({
         name: name.trim(),
         sku: sku.trim(),
         unit_price: parseFloat(price),
-      })
-      results.push({ success: true, product })
+      });
+      results.push({ success: true, product });
     } catch (error) {
-      results.push({ success: false, error: error.message, sku })
+      results.push({ success: false, error: (error as Error).message, sku });
     }
   }
 
-  return results
+  return results;
 }
 
 /**
  * Example: Generate low stock report
  */
 export async function generateLowStockReport() {
-  const authenticatedFetch = await getAuthenticatedFetch()
+  const authenticatedFetch = await getAuthenticatedFetch();
 
   const response = await authenticatedFetch(
     '/api/v1/inventory/stock?low_stock=true&limit=100'
-  )
+  );
 
-  const { data: lowStockItems } = await response.json()
+  const { data: lowStockItems } = await response.json();
 
   // Format as CSV
   const csv = [
@@ -545,10 +548,10 @@ export async function generateLowStockReport() {
       (item: any) =>
         `${item.product_name},${item.product_sku},${item.warehouse_name},${item.quantity},${item.reorder_point}`
     ),
-  ].join('\n')
+  ].join('\n');
 
-  return csv
+  return csv;
 }
 
 // Add React import for the component examples
-import * as React from 'react'
+import * as React from 'react';

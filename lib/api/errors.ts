@@ -5,32 +5,32 @@
  * Provides consistent error handling across all API routes with proper HTTP status codes.
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Standard API error response format
  */
 export interface ApiErrorResponse {
   error: {
-    code: string
-    message: string
-    details?: any
-    timestamp: string
-    path?: string
-  }
+    code: string;
+    message: string;
+    details?: any;
+    timestamp: string;
+    path?: string;
+  };
 }
 
 /**
  * Standard API success response format
  */
 export interface ApiSuccessResponse<T = any> {
-  data: T
+  data: T;
   meta?: {
-    page?: number
-    limit?: number
-    total?: number
-    [key: string]: any
-  }
+    page?: number;
+    limit?: number;
+    total?: number;
+    [key: string]: any;
+  };
 }
 
 /**
@@ -43,8 +43,8 @@ export class ApiError extends Error {
     message: string,
     public details?: any
   ) {
-    super(message)
-    this.name = 'ApiError'
+    super(message);
+    this.name = 'ApiError';
   }
 }
 
@@ -53,8 +53,8 @@ export class ApiError extends Error {
  */
 export class BadRequestError extends ApiError {
   constructor(message: string = 'Bad request', details?: any) {
-    super(400, 'BAD_REQUEST', message, details)
-    this.name = 'BadRequestError'
+    super(400, 'BAD_REQUEST', message, details);
+    this.name = 'BadRequestError';
   }
 }
 
@@ -63,8 +63,8 @@ export class BadRequestError extends ApiError {
  */
 export class UnauthorizedError extends ApiError {
   constructor(message: string = 'Unauthorized', details?: any) {
-    super(401, 'UNAUTHORIZED', message, details)
-    this.name = 'UnauthorizedError'
+    super(401, 'UNAUTHORIZED', message, details);
+    this.name = 'UnauthorizedError';
   }
 }
 
@@ -73,8 +73,8 @@ export class UnauthorizedError extends ApiError {
  */
 export class ForbiddenError extends ApiError {
   constructor(message: string = 'Forbidden', details?: any) {
-    super(403, 'FORBIDDEN', message, details)
-    this.name = 'ForbiddenError'
+    super(403, 'FORBIDDEN', message, details);
+    this.name = 'ForbiddenError';
   }
 }
 
@@ -83,8 +83,8 @@ export class ForbiddenError extends ApiError {
  */
 export class NotFoundError extends ApiError {
   constructor(message: string = 'Resource not found', details?: any) {
-    super(404, 'NOT_FOUND', message, details)
-    this.name = 'NotFoundError'
+    super(404, 'NOT_FOUND', message, details);
+    this.name = 'NotFoundError';
   }
 }
 
@@ -93,8 +93,8 @@ export class NotFoundError extends ApiError {
  */
 export class ConflictError extends ApiError {
   constructor(message: string = 'Resource conflict', details?: any) {
-    super(409, 'CONFLICT', message, details)
-    this.name = 'ConflictError'
+    super(409, 'CONFLICT', message, details);
+    this.name = 'ConflictError';
   }
 }
 
@@ -103,8 +103,8 @@ export class ConflictError extends ApiError {
  */
 export class ValidationError extends ApiError {
   constructor(message: string = 'Validation failed', details?: any) {
-    super(422, 'VALIDATION_ERROR', message, details)
-    this.name = 'ValidationError'
+    super(422, 'VALIDATION_ERROR', message, details);
+    this.name = 'ValidationError';
   }
 }
 
@@ -113,8 +113,8 @@ export class ValidationError extends ApiError {
  */
 export class RateLimitError extends ApiError {
   constructor(message: string = 'Rate limit exceeded', details?: any) {
-    super(429, 'RATE_LIMIT_EXCEEDED', message, details)
-    this.name = 'RateLimitError'
+    super(429, 'RATE_LIMIT_EXCEEDED', message, details);
+    this.name = 'RateLimitError';
   }
 }
 
@@ -123,8 +123,8 @@ export class RateLimitError extends ApiError {
  */
 export class InternalServerError extends ApiError {
   constructor(message: string = 'Internal server error', details?: any) {
-    super(500, 'INTERNAL_ERROR', message, details)
-    this.name = 'InternalServerError'
+    super(500, 'INTERNAL_ERROR', message, details);
+    this.name = 'InternalServerError';
   }
 }
 
@@ -133,8 +133,8 @@ export class InternalServerError extends ApiError {
  */
 export class ServiceUnavailableError extends ApiError {
   constructor(message: string = 'Service unavailable', details?: any) {
-    super(503, 'SERVICE_UNAVAILABLE', message, details)
-    this.name = 'ServiceUnavailableError'
+    super(503, 'SERVICE_UNAVAILABLE', message, details);
+    this.name = 'ServiceUnavailableError';
   }
 }
 
@@ -158,7 +158,7 @@ export function formatErrorResponse(
         },
       },
       { status: error.statusCode }
-    )
+    );
   }
 
   // Handle Zod validation errors
@@ -174,23 +174,23 @@ export function formatErrorResponse(
         },
       },
       { status: 422 }
-    )
+    );
   }
 
   // Handle Supabase errors
   if ('code' in error && 'message' in error) {
-    const supabaseError = error as any
+    const supabaseError = error as any;
 
     // Map common Supabase error codes
     const statusMap: Record<string, number> = {
       '23505': 409, // Unique violation
       '23503': 400, // Foreign key violation
       '42P01': 500, // Undefined table
-      'PGRST116': 404, // Row not found
-      'PGRST301': 400, // Invalid query
-    }
+      PGRST116: 404, // Row not found
+      PGRST301: 400, // Invalid query
+    };
 
-    const status = statusMap[supabaseError.code] || 500
+    const status = statusMap[supabaseError.code] || 500;
 
     return NextResponse.json(
       {
@@ -203,26 +203,24 @@ export function formatErrorResponse(
         },
       },
       { status }
-    )
+    );
   }
 
   // Generic error handler (don't expose internal errors in production)
-  const isDevelopment = process.env.NODE_ENV === 'development'
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   return NextResponse.json(
     {
       error: {
         code: 'INTERNAL_ERROR',
-        message: isDevelopment
-          ? error.message
-          : 'An unexpected error occurred',
+        message: isDevelopment ? error.message : 'An unexpected error occurred',
         details: isDevelopment ? error.stack : undefined,
         timestamp: new Date().toISOString(),
         path,
       },
     },
     { status: 500 }
-  )
+  );
 }
 
 /**
@@ -239,7 +237,7 @@ export function formatSuccessResponse<T>(
       ...(meta && { meta }),
     },
     { status }
-  )
+  );
 }
 
 /**
@@ -252,29 +250,26 @@ export function formatSuccessResponse<T>(
  * })
  */
 export function asyncHandler(
-  handler: (req: Request, context?: any) => Promise<NextResponse>
+  handler: (req: NextRequest, context?: any) => Promise<NextResponse>
 ) {
-  return async (req: Request, context?: any): Promise<NextResponse> => {
+  return async (req: NextRequest, context?: any): Promise<NextResponse> => {
     try {
-      return await handler(req, context)
+      return await handler(req, context);
     } catch (error) {
-      console.error('API Error:', error)
+      console.error('API Error:', error);
       return formatErrorResponse(
         error instanceof Error ? error : new Error('Unknown error'),
         new URL(req.url).pathname
-      )
+      );
     }
-  }
+  };
 }
 
 /**
  * Assert condition or throw error
  */
-export function assert(
-  condition: boolean,
-  error: ApiError
-): asserts condition {
+export function assert(condition: boolean, error: ApiError): asserts condition {
   if (!condition) {
-    throw error
+    throw error;
   }
 }

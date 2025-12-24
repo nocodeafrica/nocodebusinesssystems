@@ -8,21 +8,21 @@
  * Authorization: Organization members with 'inventory' module access
  */
 
-import { NextRequest } from 'next/server'
 import {
   asyncHandler,
   formatSuccessResponse,
   ValidationError,
-} from '@/lib/api/errors'
-import { withModuleAuth } from '@/lib/api/middleware'
+} from '@/lib/api/errors';
+import { withModuleAuth } from '@/lib/api/middleware';
 import {
+  createWarehouseSchema,
   validateBody,
   validateSearchParams,
   warehouseQuerySchema,
-  createWarehouseSchema,
   type CreateWarehouseInput,
   type WarehouseQuery,
-} from '@/lib/api/validators'
+} from '@/lib/api/validators';
+import { NextRequest } from 'next/server';
 
 /**
  * GET /api/v1/inventory/warehouses
@@ -64,53 +64,56 @@ import {
  */
 export const GET = asyncHandler(async (request: NextRequest) => {
   // Authenticate and check module access
-  const { supabase, auth } = await withModuleAuth(request, 'inventory')
+  const { supabase, auth } = await withModuleAuth(request, 'inventory');
 
   // Validate query parameters
-  const searchParams = request.nextUrl.searchParams
-  const query: WarehouseQuery = validateSearchParams(searchParams, warehouseQuerySchema)
+  const searchParams = request.nextUrl.searchParams;
+  const query: WarehouseQuery = validateSearchParams(
+    searchParams,
+    warehouseQuerySchema
+  );
 
   // Build base query with RLS enforcement
   let dbQuery = supabase
     .from('warehouses')
     .select('*, stock_levels(product_id, quantity)', { count: 'exact' })
-    .eq('organization_id', auth.organizationId)
+    .eq('organization_id', auth.organizationId);
 
   // Apply search filter
   if (query.search) {
     dbQuery = dbQuery.or(
       `name.ilike.%${query.search}%,code.ilike.%${query.search}%,address.ilike.%${query.search}%,city.ilike.%${query.search}%`
-    )
+    );
   }
 
   // Apply city filter
   if (query.city) {
-    dbQuery = dbQuery.eq('city', query.city)
+    dbQuery = dbQuery.eq('city', query.city);
   }
 
   // Apply state filter
   if (query.state) {
-    dbQuery = dbQuery.eq('state', query.state)
+    dbQuery = dbQuery.eq('state', query.state);
   }
 
   // Apply active status filter
   if (query.is_active !== undefined) {
-    dbQuery = dbQuery.eq('is_active', query.is_active)
+    dbQuery = dbQuery.eq('is_active', query.is_active);
   }
 
   // Apply sorting
-  const sortBy = query.sort_by || 'created_at'
-  dbQuery = dbQuery.order(sortBy, { ascending: query.sort_order === 'asc' })
+  const sortBy = query.sort_by || 'created_at';
+  dbQuery = dbQuery.order(sortBy, { ascending: query.sort_order === 'asc' });
 
   // Apply pagination
-  const offset = (query.page - 1) * query.limit
-  dbQuery = dbQuery.range(offset, offset + query.limit - 1)
+  const offset = (query.page - 1) * query.limit;
+  dbQuery = dbQuery.range(offset, offset + query.limit - 1);
 
   // Execute query
-  const { data: warehouses, error, count } = await dbQuery
+  const { data: warehouses, error, count } = await dbQuery;
 
   if (error) {
-    throw error
+    throw error;
   }
 
   // Enrich warehouses with calculated metrics
@@ -119,34 +122,34 @@ export const GET = asyncHandler(async (request: NextRequest) => {
       // Get unique product count
       const uniqueProducts = new Set(
         warehouse.stock_levels?.map((sl: any) => sl.product_id) || []
-      ).size
+      ).size;
 
       // Calculate total stock value (requires joining with products)
       const { data: stockValue } = await supabase
         .rpc('calculate_warehouse_stock_value', {
           warehouse_id_param: warehouse.id,
         })
-        .single()
+        .single();
 
       return {
         ...warehouse,
         total_products: uniqueProducts,
-        total_stock_value: stockValue?.total_value || 0,
+        total_stock_value: (stockValue as any)?.total_value || 0,
         stock_levels: undefined, // Remove raw stock_levels from response
-      }
+      };
     })
-  )
+  );
 
   // Calculate total pages
-  const totalPages = count ? Math.ceil(count / query.limit) : 0
+  const totalPages = count ? Math.ceil(count / query.limit) : 0;
 
   return formatSuccessResponse(enrichedWarehouses, {
     page: query.page,
     limit: query.limit,
     total: count || 0,
     total_pages: totalPages,
-  })
-})
+  });
+});
 
 /**
  * POST /api/v1/inventory/warehouses
@@ -188,10 +191,13 @@ export const POST = asyncHandler(async (request: NextRequest) => {
   const { supabase, auth } = await withModuleAuth(request, 'inventory', [
     'admin',
     'manager',
-  ])
+  ]);
 
   // Validate request body
-  const body: CreateWarehouseInput = await validateBody(request, createWarehouseSchema)
+  const body: CreateWarehouseInput = await validateBody(
+    request,
+    createWarehouseSchema
+  );
 
   // Check for duplicate warehouse code within organization
   const { data: existing, error: checkError } = await supabase
@@ -199,17 +205,17 @@ export const POST = asyncHandler(async (request: NextRequest) => {
     .select('id')
     .eq('organization_id', auth.organizationId)
     .eq('code', body.code)
-    .maybeSingle()
+    .maybeSingle();
 
   if (checkError) {
-    throw checkError
+    throw checkError;
   }
 
   if (existing) {
     throw new ValidationError('Warehouse with this code already exists', {
       field: 'code',
       value: body.code,
-    })
+    });
   }
 
   // Create warehouse with organization_id from auth context
@@ -221,14 +227,14 @@ export const POST = asyncHandler(async (request: NextRequest) => {
       created_by: auth.userId,
     })
     .select()
-    .single()
+    .single();
 
   if (createError) {
-    throw createError
+    throw createError;
   }
 
-  return formatSuccessResponse(warehouse, undefined, 201)
-})
+  return formatSuccessResponse(warehouse, undefined, 201);
+});
 
 /**
  * OPTIONS handler for CORS preflight
@@ -241,5 +247,5 @@ export async function OPTIONS(request: NextRequest) {
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
-  })
+  });
 }

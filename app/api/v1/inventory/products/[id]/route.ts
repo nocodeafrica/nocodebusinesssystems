@@ -9,27 +9,28 @@
  * Authorization: Organization members with 'inventory' module access
  */
 
-import { NextRequest } from 'next/server'
 import {
   asyncHandler,
   formatSuccessResponse,
   NotFoundError,
   ValidationError,
-} from '@/lib/api/errors'
-import { withModuleAuth } from '@/lib/api/middleware'
+} from '@/lib/api/errors';
+import { withModuleAuth } from '@/lib/api/middleware';
 import {
-  validateBody,
-  validateParams,
   updateProductSchema,
   uuidSchema,
+  validateBody,
+  validateParams,
   type UpdateProductInput,
-} from '@/lib/api/validators'
+} from '@/lib/api/validators';
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
 
 /**
  * Route context type (Next.js 15 App Router)
  */
 interface RouteContext {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
 /**
@@ -56,18 +57,23 @@ interface RouteContext {
  *   }
  * }
  */
-export const GET = asyncHandler(async (request: NextRequest, context: RouteContext) => {
-  // Authenticate and check module access
-  const { supabase, auth } = await withModuleAuth(request, 'inventory')
+export const GET = asyncHandler(
+  async (request: NextRequest, context: RouteContext) => {
+    // Authenticate and check module access
+    const { supabase, auth } = await withModuleAuth(request, 'inventory');
 
-  // Validate and extract product ID from route params
-  const params = await context.params
-  const productId = validateParams({ id: params.id }, { id: uuidSchema }).id
+    // Validate and extract product ID from route params
+    const params = await context.params;
+    const productId = validateParams(
+      { id: params.id },
+      z.object({ id: uuidSchema })
+    ).id;
 
-  // Fetch product with related stock levels
-  const { data: product, error } = await supabase
-    .from('products')
-    .select(`
+    // Fetch product with related stock levels
+    const { data: product, error } = await supabase
+      .from('products')
+      .select(
+        `
       *,
       stock_levels (
         warehouse_id,
@@ -78,26 +84,29 @@ export const GET = asyncHandler(async (request: NextRequest, context: RouteConte
           code
         )
       )
-    `)
-    .eq('id', productId)
-    .eq('organization_id', auth.organizationId)
-    .single()
+    `
+      )
+      .eq('id', productId)
+      .eq('organization_id', auth.organizationId)
+      .single();
 
-  if (error || !product) {
-    throw new NotFoundError('Product not found')
+    if (error || !product) {
+      throw new NotFoundError('Product not found');
+    }
+
+    // Calculate total stock across all warehouses
+    const totalStock =
+      product.stock_levels?.reduce(
+        (sum: number, level: any) => sum + (level.quantity || 0),
+        0
+      ) || 0;
+
+    return formatSuccessResponse({
+      ...product,
+      total_stock: totalStock,
+    });
   }
-
-  // Calculate total stock across all warehouses
-  const totalStock = product.stock_levels?.reduce(
-    (sum: number, level: any) => sum + (level.quantity || 0),
-    0
-  ) || 0
-
-  return formatSuccessResponse({
-    ...product,
-    total_stock: totalStock,
-  })
-})
+);
 
 /**
  * PATCH /api/v1/inventory/products/:id
@@ -121,74 +130,82 @@ export const GET = asyncHandler(async (request: NextRequest, context: RouteConte
  *   }
  * }
  */
-export const PATCH = asyncHandler(async (request: NextRequest, context: RouteContext) => {
-  // Authenticate and check module access
-  // Require 'admin' or 'manager' role to update products
-  const { supabase, auth } = await withModuleAuth(request, 'inventory', [
-    'admin',
-    'manager',
-  ])
+export const PATCH = asyncHandler(
+  async (request: NextRequest, context: RouteContext) => {
+    // Authenticate and check module access
+    // Require 'admin' or 'manager' role to update products
+    const { supabase, auth } = await withModuleAuth(request, 'inventory', [
+      'admin',
+      'manager',
+    ]);
 
-  // Validate product ID
-  const params = await context.params
-  const productId = validateParams({ id: params.id }, { id: uuidSchema }).id
+    // Validate product ID
+    const params = await context.params;
+    const productId = validateParams(
+      { id: params.id },
+      z.object({ id: uuidSchema })
+    ).id;
 
-  // Validate request body
-  const updates: UpdateProductInput = await validateBody(request, updateProductSchema)
+    // Validate request body
+    const updates: UpdateProductInput = await validateBody(
+      request,
+      updateProductSchema
+    );
 
-  // Check if product exists and belongs to organization
-  const { data: existing, error: fetchError } = await supabase
-    .from('products')
-    .select('id, sku')
-    .eq('id', productId)
-    .eq('organization_id', auth.organizationId)
-    .single()
-
-  if (fetchError || !existing) {
-    throw new NotFoundError('Product not found')
-  }
-
-  // If SKU is being updated, check for duplicates
-  if (updates.sku && updates.sku !== existing.sku) {
-    const { data: duplicate, error: checkError } = await supabase
+    // Check if product exists and belongs to organization
+    const { data: existing, error: fetchError } = await supabase
       .from('products')
-      .select('id')
+      .select('id, sku')
+      .eq('id', productId)
       .eq('organization_id', auth.organizationId)
-      .eq('sku', updates.sku)
-      .neq('id', productId)
-      .maybeSingle()
+      .single();
 
-    if (checkError) {
-      throw checkError
+    if (fetchError || !existing) {
+      throw new NotFoundError('Product not found');
     }
 
-    if (duplicate) {
-      throw new ValidationError('Product with this SKU already exists', {
-        field: 'sku',
-        value: updates.sku,
+    // If SKU is being updated, check for duplicates
+    if (updates.sku && updates.sku !== existing.sku) {
+      const { data: duplicate, error: checkError } = await supabase
+        .from('products')
+        .select('id')
+        .eq('organization_id', auth.organizationId)
+        .eq('sku', updates.sku)
+        .neq('id', productId)
+        .maybeSingle();
+
+      if (checkError) {
+        throw checkError;
+      }
+
+      if (duplicate) {
+        throw new ValidationError('Product with this SKU already exists', {
+          field: 'sku',
+          value: updates.sku,
+        });
+      }
+    }
+
+    // Update product
+    const { data: product, error: updateError } = await supabase
+      .from('products')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+        updated_by: auth.userId,
       })
+      .eq('id', productId)
+      .eq('organization_id', auth.organizationId)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw updateError;
     }
+
+    return formatSuccessResponse(product);
   }
-
-  // Update product
-  const { data: product, error: updateError } = await supabase
-    .from('products')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString(),
-      updated_by: auth.userId,
-    })
-    .eq('id', productId)
-    .eq('organization_id', auth.organizationId)
-    .select()
-    .single()
-
-  if (updateError) {
-    throw updateError
-  }
-
-  return formatSuccessResponse(product)
-})
+);
 
 /**
  * DELETE /api/v1/inventory/products/:id
@@ -205,73 +222,80 @@ export const PATCH = asyncHandler(async (request: NextRequest, context: RouteCon
  *   }
  * }
  */
-export const DELETE = asyncHandler(async (request: NextRequest, context: RouteContext) => {
-  // Authenticate and check module access
-  // Require 'admin' role to delete products
-  const { supabase, auth } = await withModuleAuth(request, 'inventory', ['admin'])
+export const DELETE = asyncHandler(
+  async (request: NextRequest, context: RouteContext) => {
+    // Authenticate and check module access
+    // Require 'admin' role to delete products
+    const { supabase, auth } = await withModuleAuth(request, 'inventory', [
+      'admin',
+    ]);
 
-  // Validate product ID
-  const params = await context.params
-  const productId = validateParams({ id: params.id }, { id: uuidSchema }).id
+    // Validate product ID
+    const params = await context.params;
+    const productId = validateParams(
+      { id: params.id },
+      z.object({ id: uuidSchema })
+    ).id;
 
-  // Check if product exists and belongs to organization
-  const { data: existing, error: fetchError } = await supabase
-    .from('products')
-    .select('id, name')
-    .eq('id', productId)
-    .eq('organization_id', auth.organizationId)
-    .single()
+    // Check if product exists and belongs to organization
+    const { data: existing, error: fetchError } = await supabase
+      .from('products')
+      .select('id, name')
+      .eq('id', productId)
+      .eq('organization_id', auth.organizationId)
+      .single();
 
-  if (fetchError || !existing) {
-    throw new NotFoundError('Product not found')
+    if (fetchError || !existing) {
+      throw new NotFoundError('Product not found');
+    }
+
+    // Check if product has stock levels
+    const { data: stockLevels, error: stockError } = await supabase
+      .from('stock_levels')
+      .select('quantity')
+      .eq('product_id', productId);
+
+    if (stockError) {
+      throw stockError;
+    }
+
+    const hasStock = stockLevels?.some((level) => level.quantity > 0);
+
+    if (hasStock) {
+      throw new ValidationError(
+        'Cannot delete product with existing stock. Please transfer or adjust stock to zero first.',
+        {
+          product_id: productId,
+          has_stock: true,
+        }
+      );
+    }
+
+    // Soft delete: deactivate the product
+    const { data: product, error: deleteError } = await supabase
+      .from('products')
+      .update({
+        is_active: false,
+        deleted_at: new Date().toISOString(),
+        deleted_by: auth.userId,
+      })
+      .eq('id', productId)
+      .eq('organization_id', auth.organizationId)
+      .select()
+      .single();
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    return formatSuccessResponse({
+      id: product.id,
+      is_active: product.is_active,
+      deleted_at: product.deleted_at,
+      message: 'Product successfully deactivated',
+    });
   }
-
-  // Check if product has stock levels
-  const { data: stockLevels, error: stockError } = await supabase
-    .from('stock_levels')
-    .select('quantity')
-    .eq('product_id', productId)
-
-  if (stockError) {
-    throw stockError
-  }
-
-  const hasStock = stockLevels?.some((level) => level.quantity > 0)
-
-  if (hasStock) {
-    throw new ValidationError(
-      'Cannot delete product with existing stock. Please transfer or adjust stock to zero first.',
-      {
-        product_id: productId,
-        has_stock: true,
-      }
-    )
-  }
-
-  // Soft delete: deactivate the product
-  const { data: product, error: deleteError } = await supabase
-    .from('products')
-    .update({
-      is_active: false,
-      deleted_at: new Date().toISOString(),
-      deleted_by: auth.userId,
-    })
-    .eq('id', productId)
-    .eq('organization_id', auth.organizationId)
-    .select()
-    .single()
-
-  if (deleteError) {
-    throw deleteError
-  }
-
-  return formatSuccessResponse({
-    id: product.id,
-    is_active: product.is_active,
-    deleted_at: product.deleted_at,
-    message: 'Product successfully deactivated',
-  })
-})
+);
 
 /**
  * OPTIONS handler for CORS preflight
@@ -284,5 +308,5 @@ export async function OPTIONS(request: NextRequest) {
       'Access-Control-Allow-Methods': 'GET, PATCH, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
-  })
+  });
 }
